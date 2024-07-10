@@ -16,6 +16,14 @@ if uploaded_file is not None:
         st.error(f"Error loading the file: {e}")
         st.stop()
     
+    # Display the DataFrame columns
+    st.write("DataFrame Columns:")
+    st.write(uploaded_data.columns)
+    
+    # Display rows around the expected data to help with debugging
+    st.write("Rows around the expected data:")
+    st.write(uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains("Prezzo", na=False)].head(10))
+    
     # Function to safely extract data from the DataFrame
     def safe_extract(df, condition, column):
         try:
