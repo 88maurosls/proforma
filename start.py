@@ -1,46 +1,31 @@
 import pandas as pd
 import streamlit as st
-import os
 
-st.title('Excel Data Transformer')
+st.title('Trasformatore di Dati Excel')
 
-# Upload the Excel file
-uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+# Carica il file Excel
+uploaded_file = st.file_uploader("Scegli un file Excel", type="xlsx")
 
 if uploaded_file is not None:
     try:
-        # Save the uploaded file temporarily
-        with open("temp_file.xlsx", "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        
-        # Convert Excel file to CSV
-        temp_csv_file = "temp_file.csv"
-        data_xls = pd.read_excel("temp_file.xlsx", skiprows=20, engine='openpyxl')
-        data_xls.to_csv(temp_csv_file, encoding='utf-8', index=False)
-        
-        # Read the CSV file
-        uploaded_data = pd.read_csv(temp_csv_file)
-        st.write("Data loaded successfully. Here's a preview:")
+        # Prova a leggere il file Excel con openpyxl
+        uploaded_data = pd.read_excel(uploaded_file, skiprows=20, engine='openpyxl')
+        st.write("Dati caricati con successo. Ecco un'anteprima:")
         st.write(uploaded_data.head(10))
-        
-        # Clean up temporary files
-        os.remove("temp_file.xlsx")
-        os.remove(temp_csv_file)
-        
     except Exception as e:
-        st.error(f"Error loading the file: {e}")
+        st.error(f"Errore durante il caricamento del file: {e}")
         st.stop()
     
-    # Display the DataFrame columns
-    st.write("DataFrame Columns:")
+    # Mostra le colonne del DataFrame
+    st.write("Colonne del DataFrame:")
     st.write(uploaded_data.columns)
     
-    # Display rows around the expected data to help with debugging
-    st.write("Rows containing 'Prezzo':")
+    # Mostra le righe che contengono 'Prezzo' per il debug
+    st.write("Righe contenenti 'Prezzo':")
     prezzo_rows = uploaded_data[uploaded_data.apply(lambda row: row.astype(str).str.contains('Prezzo', case=False, na=False).any(), axis=1)]
     st.write(prezzo_rows)
     
-    # Function to safely extract data from the DataFrame
+    # Funzione per estrarre i dati in modo sicuro dal DataFrame
     def safe_extract(df, condition, column):
         try:
             df['DETTAGLI RIGA ARTICOLO'] = df['DETTAGLI RIGA ARTICOLO'].astype(str).str.strip().str.lower()
@@ -48,46 +33,46 @@ if uploaded_file is not None:
             value = df[df['DETTAGLI RIGA ARTICOLO'].str.contains(condition, case=False, na=False)][column].values[0]
             return value
         except IndexError:
-            st.error(f"Could not find value for condition: '{condition}' in column: '{column}'")
+            st.error(f"Non è stato possibile trovare il valore per la condizione: '{condition}' nella colonna: '{column}'")
             return None
     
-    # Extract relevant information from the uploaded data
+    # Estrai le informazioni rilevanti dai dati caricati
     articolo = safe_extract(uploaded_data, 'Modello/Colore:', 'Unnamed: 1')
     descrizione = safe_extract(uploaded_data, 'Nome del modello:', 'Unnamed: 1')
     categoria = safe_extract(uploaded_data, 'Tipo di prodotto:', 'Unnamed: 1')
     colore = safe_extract(uploaded_data, 'Descrizione colore:', 'Unnamed: 1')
     qta = safe_extract(uploaded_data, 'Riga articolo:', 'Unnamed: 1')
     
-    # Extracting "Prezzo all'ingrosso" using 'Unnamed: 7'
+    # Estrai "Prezzo all'ingrosso" usando 'Unnamed: 7'
     try:
         prezzo_row = uploaded_data[uploaded_data['Unnamed: 6'].str.contains("Prezzo all'ingrosso", case=False, na=False)]
         prezzo = prezzo_row['Unnamed: 7'].values[0]
     except IndexError:
-        st.error("Could not find value for 'Prezzo all'ingrosso' in the expected column.")
+        st.error("Non è stato possibile trovare il valore per 'Prezzo all'ingrosso' nella colonna prevista.")
         prezzo = None
     
-    # Extracting "Codice a Barre (UPC)" and "Misura"
+    # Estrai "Codice a Barre (UPC)" e "Misura"
     try:
-        sizes_barcodes = uploaded_data[(uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains(r'^\d+(\.\d+)?$', na=False))]  # Regex to match numeric values (sizes)
+        sizes_barcodes = uploaded_data[(uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains(r'^\d+(\.\d+)?$', na=False))]  # Regex per corrispondere ai valori numerici (misure)
         sizes = sizes_barcodes['DETTAGLI RIGA ARTICOLO'].values.tolist()
         barcodes = sizes_barcodes['Unnamed: 1'].values.tolist()
-        st.write("Extracted Sizes and Barcodes:")
+        st.write("Taglie e Codici a Barre Estratti:")
         st.write(sizes_barcodes)
     except IndexError:
-        st.error("Could not find 'Misura' or 'Codice a Barre (UPC)' in the expected columns.")
+        st.error("Non è stato possibile trovare 'Misura' o 'Codice a Barre (UPC)' nelle colonne previste.")
         sizes = []
         barcodes = []
     
-    # Additional debugging information
-    st.write("Extracted Values:")
+    # Informazioni di debug aggiuntive
+    st.write("Valori Estratti:")
     st.write(f"Articolo: {articolo}")
     st.write(f"Descrizione: {descrizione}")
     st.write(f"Categoria: {categoria}")
     st.write(f"Colore: {colore}")
     st.write(f"QTA: {qta}")
     st.write(f"Prezzo: {prezzo}")
-    st.write(f"Sizes: {sizes}")
-    st.write(f"Barcodes: {barcodes}")
+    st.write(f"Taglie: {sizes}")
+    st.write(f"Codici a Barre: {barcodes}")
     
     if qta is not None:
         qta = int(qta)
@@ -95,10 +80,10 @@ if uploaded_file is not None:
         prezzo = float(prezzo.replace('€', '').replace(',', '.').strip())
     
     if None in [articolo, descrizione, categoria, colore, qta, prezzo] or not sizes or not barcodes:
-        st.error("Some required data is missing. Please check the input file.")
+        st.error("Alcuni dati richiesti sono mancanti. Si prega di controllare il file di input.")
         st.stop()
     
-    # Create the final output DataFrame
+    # Crea il DataFrame finale di output
     output_data = pd.DataFrame({
         'ARTICOLO': [articolo] * len(sizes),
         'DESCRIZIONE': [descrizione] * len(sizes),
@@ -106,28 +91,28 @@ if uploaded_file is not None:
         'COLORE': [colore] * len(sizes),
         'TAGLIA': sizes,
         'BARCODE': barcodes,
-        'SPEC_MATERIALE': [None] * len(sizes),  # Placeholder, as information is not available
-        'MADEIN': [None] * len(sizes),  # Placeholder, as information is not available
-        'ID_ORDINE': [None] * len(sizes),  # Placeholder, as information is not available
+        'SPEC_MATERIALE': [None] * len(sizes),  # Placeholder, dato non disponibile
+        'MADEIN': [None] * len(sizes),  # Placeholder, dato non disponibile
+        'ID_ORDINE': [None] * len(sizes),  # Placeholder, dato non disponibile
         'QTA': [qta] * len(sizes),
         'PREZZO+-IVA': [prezzo] * len(sizes),
-        'PREZZO_NETTO': [None] * len(sizes),  # Placeholder, as information is not available
-        '%': [None] * len(sizes),  # Placeholder, as information is not available
-        'IMPORTO': [None] * len(sizes),  # Placeholder, as information is not available
-        'HSCODE': [None] * len(sizes)  # Placeholder, as information is not available
+        'PREZZO_NETTO': [None] * len(sizes),  # Placeholder, dato non disponibile
+        '%': [None] * len(sizes),  # Placeholder, dato non disponibile
+        'IMPORTO': [None] * len(sizes),  # Placeholder, dato non disponibile
+        'HSCODE': [None] * len(sizes)  # Placeholder, dato non disponibile
     })
     
-    # Display the transformed data
-    st.write("Transformed Data:")
+    # Mostra i dati trasformati
+    st.write("Dati Trasformati:")
     st.write(output_data)
     
-    # Save the transformed data to a new Excel file
-    output_file = "transformed_data.xlsx"
+    # Salva i dati trasformati in un nuovo file Excel
+    output_file = "dati_trasformati.xlsx"
     output_data.to_excel(output_file, index=False)
     
-    # Provide a download link for the new Excel file
+    # Fornisci un link per scaricare il nuovo file Excel
     st.download_button(
-        label="Download Transformed Data",
+        label="Scarica i Dati Trasformati",
         data=open(output_file, "rb").read(),
         file_name=output_file,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
