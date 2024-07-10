@@ -28,7 +28,8 @@ if uploaded_file is not None:
     # Function to safely extract data from the DataFrame
     def safe_extract(df, condition, column):
         try:
-            df['DETTAGLI RIGA ARTICOLO'] = df['DETTAGLI RIGA ARTICOLO'].astype(str).str.strip()
+            df['DETTAGLI RIGA ARTICOLO'] = df['DETTAGLI RIGA ARTICOLO'].astype(str).str.strip().str.lower()
+            condition = condition.lower().strip()
             value = df[df['DETTAGLI RIGA ARTICOLO'].str.contains(condition, case=False, na=False)][column].values[0]
             return value
         except IndexError:
