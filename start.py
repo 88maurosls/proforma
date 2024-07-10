@@ -42,7 +42,7 @@ if uploaded_file is not None:
     categoria = safe_extract(uploaded_data, 'Tipo di prodotto:', 'Unnamed: 1')
     colore = safe_extract(uploaded_data, 'Descrizione colore:', 'Unnamed: 1')
     qta = safe_extract(uploaded_data, 'Riga articolo:', 'Unnamed: 1')
-    prezzo = safe_extract(uploaded_data, "Prezzo all'ingrosso", 'Unnamed: 6')  # Corrected column
+    prezzo = safe_extract(uploaded_data, "Prezzo all'ingrosso", 'Unnamed: 7')  # Corrected column
     
     if qta is not None:
         qta = int(qta)
@@ -81,9 +81,3 @@ if uploaded_file is not None:
     output_data.to_excel(output_file, index=False)
     
     # Provide a download link for the new Excel file
-    st.download_button(
-        label="Download Transformed Data",
-        data=open(output_file, "rb").read(),
-        file_name=output_file,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
