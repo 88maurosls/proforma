@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import os
 
 st.title('Excel Data Transformer')
 
@@ -7,12 +8,25 @@ st.title('Excel Data Transformer')
 uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 
 if uploaded_file is not None:
-    # Load the Excel file starting from row 21 (skip the first 20 rows)
     try:
-        # Read the Excel file without loading the styles
-        uploaded_data = pd.read_excel(uploaded_file, skiprows=20, engine='openpyxl')
+        # Save the uploaded file temporarily
+        with open("temp_file.xlsx", "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        
+        # Convert Excel file to CSV
+        temp_csv_file = "temp_file.csv"
+        data_xls = pd.read_excel("temp_file.xlsx", skiprows=20, engine='openpyxl')
+        data_xls.to_csv(temp_csv_file, encoding='utf-8', index=False)
+        
+        # Read the CSV file
+        uploaded_data = pd.read_csv(temp_csv_file)
         st.write("Data loaded successfully. Here's a preview:")
         st.write(uploaded_data.head(10))
+        
+        # Clean up temporary files
+        os.remove("temp_file.xlsx")
+        os.remove(temp_csv_file)
+        
     except Exception as e:
         st.error(f"Error loading the file: {e}")
         st.stop()
