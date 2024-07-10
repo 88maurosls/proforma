@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-import pyexcel as p
+import os
 
 st.title('Trasformatore di Dati Excel')
 
@@ -9,24 +9,10 @@ uploaded_file = st.file_uploader("Scegli un file Excel", type="xlsx")
 
 if uploaded_file is not None:
     try:
-        # Salva il file caricato temporaneamente
-        temp_xlsx_file = "temp_file.xlsx"
-        with open(temp_xlsx_file, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        
-        # Converte il file Excel in CSV
-        temp_csv_file = "temp_file.csv"
-        p.save_book_as(file_name=temp_xlsx_file, dest_file_name=temp_csv_file)
-        
-        # Leggi il file CSV
-        uploaded_data = pd.read_csv(temp_csv_file)
+        # Leggi il file Excel
+        uploaded_data = pd.read_excel(uploaded_file, skiprows=20, engine='openpyxl')
         st.write("Dati caricati con successo. Ecco un'anteprima:")
         st.write(uploaded_data.head(10))
-        
-        # Pulisci i file temporanei
-        import os
-        os.remove(temp_xlsx_file)
-        os.remove(temp_csv_file)
         
     except Exception as e:
         st.error(f"Errore durante il caricamento del file: {e}")
