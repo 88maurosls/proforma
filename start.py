@@ -21,8 +21,9 @@ if uploaded_file is not None:
     st.write(uploaded_data.columns)
     
     # Display rows around the expected data to help with debugging
-    st.write("Rows around the expected data:")
-    st.write(uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains("Prezzo", na=False)].head(10))
+    st.write("Rows containing 'Prezzo':")
+    prezzo_rows = uploaded_data[uploaded_data.apply(lambda row: row.astype(str).str.contains('Prezzo', case=False, na=False).any(), axis=1)]
+    st.write(prezzo_rows)
     
     # Function to safely extract data from the DataFrame
     def safe_extract(df, condition, column):
