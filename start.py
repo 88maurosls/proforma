@@ -9,6 +9,7 @@ uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 if uploaded_file is not None:
     # Load the Excel file starting from row 21 (skip the first 20 rows)
     try:
+        # Read the Excel file without loading the styles
         uploaded_data = pd.read_excel(uploaded_file, skiprows=20, engine='openpyxl')
         st.write("Data loaded successfully. Here's a preview:")
         st.write(uploaded_data.head(10))
