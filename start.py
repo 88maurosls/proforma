@@ -54,13 +54,25 @@ if uploaded_file is not None:
     # Extracting "Codice a Barre (UPC)" and "Misura"
     try:
         sizes_barcodes = uploaded_data[(uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains(r'^\d+(\.\d+)?$', na=False))]  # Regex to match numeric values (sizes)
-        sizes = sizes_barcodes['DETTAGLI RIGA ARTICOLO'].values
-        barcodes = sizes_barcodes['Unnamed: 1'].values
+        sizes = sizes_barcodes['DETTAGLI RIGA ARTICOLO'].values.tolist()
+        barcodes = sizes_barcodes['Unnamed: 1'].values.tolist()
         st.write("Extracted Sizes and Barcodes:")
         st.write(sizes_barcodes)
     except IndexError:
         st.error("Could not find 'Misura' or 'Codice a Barre (UPC)' in the expected columns.")
-        sizes = barcodes = []
+        sizes = []
+        barcodes = []
+    
+    # Additional debugging information
+    st.write("Extracted Values:")
+    st.write(f"Articolo: {articolo}")
+    st.write(f"Descrizione: {descrizione}")
+    st.write(f"Categoria: {categoria}")
+    st.write(f"Colore: {colore}")
+    st.write(f"QTA: {qta}")
+    st.write(f"Prezzo: {prezzo}")
+    st.write(f"Sizes: {sizes}")
+    st.write(f"Barcodes: {barcodes}")
     
     if qta is not None:
         qta = int(qta)
