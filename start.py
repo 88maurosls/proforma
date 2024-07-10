@@ -50,48 +50,42 @@ if uploaded_file is not None:
     except IndexError:
         st.error("Could not find value for 'Prezzo all'ingrosso' in the expected column.")
         prezzo = None
-
+    
     # Extracting "Codice a Barre (UPC)" and "Misura"
     try:
-        misura_row = uploaded_data[uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains("Misura", case=False, na=False)]
-        misura = misura_row['Unnamed: 1'].values[0]
+        sizes_barcodes = uploaded_data[(uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains(r'^\d+(\.\d+)?$', na=False))]  # Regex to match numeric values (sizes)
+        sizes = sizes_barcodes['DETTAGLI RIGA ARTICOLO'].values
+        barcodes = sizes_barcodes['Unnamed: 1'].values
     except IndexError:
-        st.error("Could not find value for 'Misura' in the expected column.")
-        misura = None
-
-    try:
-        barcode_row = uploaded_data[uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains("Codice a Barre (UPC)", case=False, na=False)]
-        barcode = barcode_row['Unnamed: 1'].values[0]
-    except IndexError:
-        st.error("Could not find value for 'Codice a Barre (UPC)' in the expected column.")
-        barcode = None
+        st.error("Could not find 'Misura' or 'Codice a Barre (UPC)' in the expected columns.")
+        sizes = barcodes = None
     
     if qta is not None:
         qta = int(qta)
     if prezzo is not None:
         prezzo = float(prezzo.replace('€', '').replace(',', '.').strip())
     
-    if None in [articolo, descrizione, categoria, colore, qta, prezzo, misura, barcode]:
+    if None in [articolo, descrizione, categoria, colore, qta, prezzo, sizes, barcodes]:
         st.error("Some required data is missing. Please check the input file.")
         st.stop()
     
     # Create the final output DataFrame
     output_data = pd.DataFrame({
-        'ARTICOLO': [articolo],
-        'DESCRIZIONE': [descrizione],
-        'CATEGORIA': [categoria],
-        'COLORE': [colore],
-        'TAGLIA': [misura],  # Extracted misura
-        'BARCODE': [barcode],  # Extracted barcode
-        'SPEC_MATERIALE': [None],  # Placeholder, as information is not available
-        'MADEIN': [None],  # Placeholder, as information is not available
-        'ID_ORDINE': [None],  # Placeholder, as information is not available
-        'QTA': [qta],
-        'PREZZO+-IVA': [prezzo],
-        'PREZZO_NETTO': [None],  # Placeholder, as information is not available
-        '%': [None],  # Placeholder, as information is not available
-        'IMPORTO': [None],  # Placeholder, as information is not available
-        'HSCODE': [None]  # Placeholder, as information is not available
+        'ARTICOLO': [articolo] * len(sizes),
+        'DESCRIZIONE': [descrizione] * len(sizes),
+        'CATEGORIA': [categoria] * len(sizes),
+        'COLORE': [colore] * len(sizes),
+        'TAGLIA': sizes,
+        'BARCODE': barcodes,
+        'SPEC_MATERIALE': [None] * len(sizes),  # Placeholder, as information is not available
+        'MADEIN': [None] * len(sizes),  # Placeholder, as information is not available
+        'ID_ORDINE': [None] * len(sizes),  # Placeholder, as information is not available
+        'QTA': [qta] * len(sizes),
+        'PREZZO+-IVA': [prezzo] * len(sizes),
+        'PREZZO_NETTO': [None] * len(sizes),  # Placeholder, as information is not available
+        '%': [None] * len(sizes),  # Placeholder, as information is not available
+        'IMPORTO': [None] * len(sizes),  # Placeholder, as information is not available
+        'HSCODE': [None] * len(sizes)  # Placeholder, as information is not available
     })
     
     # Display the transformed data
