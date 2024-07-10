@@ -8,18 +8,39 @@ uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 
 if uploaded_file is not None:
     # Load the Excel file starting from row 21 (skip the first 20 rows)
-    uploaded_data = pd.read_excel(uploaded_file, skiprows=20, engine='openpyxl')
+    try:
+        uploaded_data = pd.read_excel(uploaded_file, skiprows=20, engine='openpyxl')
+        st.write("Data loaded successfully. Here's a preview:")
+        st.write(uploaded_data.head(10))
+    except Exception as e:
+        st.error(f"Error loading the file: {e}")
+        st.stop()
+    
+    # Function to safely extract data from the DataFrame
+    def safe_extract(df, condition, column):
+        try:
+            value = df.loc[df['DETTAGLI RIGA ARTICOLO'] == condition, column].values[0]
+            return value
+        except IndexError:
+            st.error(f"Could not find value for condition: '{condition}' in column: '{column}'")
+            return None
     
     # Extract relevant information from the uploaded data
-    articolo = uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'] == 'Modello/Colore:', 'Unnamed: 1'].values[0]
-    descrizione = uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'] == 'Nome del modello:', 'Unnamed: 1'].values[0]
-    categoria = uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'] == 'Tipo di prodotto:', 'Unnamed: 1'].values[0]
-    colore = uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'] == 'Descrizione colore:', 'Unnamed: 1'].values[0]
-    qta = int(uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'] == 'Riga articolo:', 'Unnamed: 1'].values[0])
-    prezzo = uploaded_data.loc[uploaded_data['DETTAGLI RIGA ARTICOLO'] == "Prezzo all'ingrosso", 'Unnamed: 1'].values[0]
+    articolo = safe_extract(uploaded_data, 'Modello/Colore:', 'Unnamed: 1')
+    descrizione = safe_extract(uploaded_data, 'Nome del modello:', 'Unnamed: 1')
+    categoria = safe_extract(uploaded_data, 'Tipo di prodotto:', 'Unnamed: 1')
+    colore = safe_extract(uploaded_data, 'Descrizione colore:', 'Unnamed: 1')
+    qta = safe_extract(uploaded_data, 'Riga articolo:', 'Unnamed: 1')
+    prezzo = safe_extract(uploaded_data, "Prezzo all'ingrosso", 'Unnamed: 1')
     
-    # Convert price from string to float
-    prezzo = float(prezzo.replace('€', '').replace(',', '.').strip())
+    if qta is not None:
+        qta = int(qta)
+    if prezzo is not None:
+        prezzo = float(prezzo.replace('€', '').replace(',', '.').strip())
+    
+    if None in [articolo, descrizione, categoria, colore, qta, prezzo]:
+        st.error("Some required data is missing. Please check the input file.")
+        st.stop()
     
     # Create the final output DataFrame
     output_data = pd.DataFrame({
