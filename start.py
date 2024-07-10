@@ -51,12 +51,27 @@ if uploaded_file is not None:
         st.error("Could not find value for 'Prezzo all'ingrosso' in the expected column.")
         prezzo = None
 
+    # Extracting "Codice a Barre (UPC)" and "Misura"
+    try:
+        misura_row = uploaded_data[uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains("Misura", case=False, na=False)]
+        misura = misura_row['Unnamed: 1'].values[0]
+    except IndexError:
+        st.error("Could not find value for 'Misura' in the expected column.")
+        misura = None
+
+    try:
+        barcode_row = uploaded_data[uploaded_data['DETTAGLI RIGA ARTICOLO'].str.contains("Codice a Barre (UPC)", case=False, na=False)]
+        barcode = barcode_row['Unnamed: 1'].values[0]
+    except IndexError:
+        st.error("Could not find value for 'Codice a Barre (UPC)' in the expected column.")
+        barcode = None
+    
     if qta is not None:
         qta = int(qta)
     if prezzo is not None:
         prezzo = float(prezzo.replace('€', '').replace(',', '.').strip())
     
-    if None in [articolo, descrizione, categoria, colore, qta, prezzo]:
+    if None in [articolo, descrizione, categoria, colore, qta, prezzo, misura, barcode]:
         st.error("Some required data is missing. Please check the input file.")
         st.stop()
     
@@ -66,8 +81,8 @@ if uploaded_file is not None:
         'DESCRIZIONE': [descrizione],
         'CATEGORIA': [categoria],
         'COLORE': [colore],
-        'TAGLIA': [None],  # Placeholder, as information is not available
-        'BARCODE': [None],  # Placeholder, as information is not available
+        'TAGLIA': [misura],  # Extracted misura
+        'BARCODE': [barcode],  # Extracted barcode
         'SPEC_MATERIALE': [None],  # Placeholder, as information is not available
         'MADEIN': [None],  # Placeholder, as information is not available
         'ID_ORDINE': [None],  # Placeholder, as information is not available
